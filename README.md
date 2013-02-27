@@ -1,0 +1,4 @@
+getColor
+========
+
+get color value
