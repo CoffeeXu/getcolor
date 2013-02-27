@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>getColor</title>
+	<link rel="stylesheet" href="index.css" />
+</head>
+
+<body>
+  <div id="container">
+    <header>
+      <div id="title">getColor</div>
+    </header>
+
+    <div id="viewer">
+      <div id="droparea-text">
+        Drag an image here to get color.
+      </div>
+      <canvas id="preview" height="0" width="0"></canvas>
+    </div>
+
+  </div>
+  <div id="progress"></div>
+  <footer>  	
+		  <form id="form1" name="form1" method="post" action="">
+		    <input type="text" id="fileName" class="type-file-text"></input>
+				<input type="button" class="type-file-button" value="浏览"/>
+				<input type="file" size="20" class="type-file-file" onchange="handleFiles(this.files)"></input>
+		  </form>	
+  </footer>
+  <a href="https://github.com/CoffeeXu/HelloWorld/tree/master/canvas"><img style="position: absolute; top: 0; right: 0; border: 0;" src="" alt="Fork me on GitHub"></a>
+
+<script type="text/javascript"> 
+function $(id){
+	return document.getElementById(id);
+}
+
+var preCanvas = $("preview");
+var viewer = $("viewer");
+var progress = $('progress');
+  
+viewer.addEventListener("drop",function(e){  
+     e.stopPropagation();   
+     e.preventDefault();    
+  
+     var dt = e.dataTransfer;    
+  
+     //获取文件数组  
+     var files = dt.files;  
+     handleFiles(files);   
+},false);  
+  
+/*FileReader预览图片*/
+function handleFiles(file){ 
+	var fileName = $("fileName");
+	fileName.value = file[0].name;
+	if (file[0].type.indexOf("image") == 0) { 
+		if(file[0].size >= 512000){
+			progress.innerHTML = "图片"+file[0].name+"过大，无法处理。拿个<500k的试试吧";
+		}else{
+			var reader = new FileReader();  
+			reader.onload = function(e){
+				//
+				displayImage(e.target.result);//displayImage(container,dataURL)
+			}
+			reader.readAsDataURL(file[0]); 
+		}
+	}else{
+		progress.innerHTML = "ooop! "+file[0].name+"不是图片"; 
+	}		  
+}
+
+function displayImage(dataURL){	
+	var cxt = preCanvas.getContext("2d");	
+	var img = new Image();	
+	
+	img.onload = function(){
+		var w = img.width, h = img.height;
+		preCanvas.width = w; 
+		preCanvas.height = h;
+		viewer.style.width = w+"px";
+		viewer.style.height = h+"px";
+		$("droparea-text").style.display = "none";
+		
+		cxt.drawImage(img, 0, 0);
+		getColorValue(cxt);
+	}
+	img.src = dataURL;
+}
+
+//获取data并显示
+function getColorValue(canvas){
+	//console.log(data);
+	preCanvas.onmousemove = function(e){
+		var x=e.layerX;
+		var y=e.layerY;
+		var data = canvas.getImageData(x, y, x+1, y+1).data;
+		
+		progress.style.left = e.pageX+"px";
+		progress.style.top = e.pageY+"px";
+		progress.innerHTML = "xy("+x+","+y+")<br/>color:rgba("+data[0]+","+data[1]+","+data[2]+","+data[3]+")<br/>color:"+colorHex(data[0],data[1],data[2]);
+	}
+	preCanvas.onmouseout = function(){
+		progress.innerHTML = "";
+	}
+}
+
+/*转换色值:rgba->#000000*/
+function colorHex(a1,a2,a3){
+	var strHex = "#";
+	for (var i = 0; i < 3; i++) {
+		try{
+			strHex+=(arguments[i]<16?"0":"")+arguments[i].toString(16);
+		}catch(e){
+			alert(e.message);
+		}
+	}
+	return strHex;
+}
+
+
+</script>
+</body>
+</html>
+<!-- 1.拖拽预览图片 2.点击时才获取数据，否则data太大 -->
